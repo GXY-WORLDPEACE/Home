@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>活动主页</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+    />
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: url("spacex.jpg") no-repeat center center fixed; /* 使用相对路径 */
+        background-size: cover; /* 背景图片覆盖整个页面 */
+        margin: 0;
+        padding: 0;
+        color: #000; /* 设置文本颜色为黑色 */
+        backdrop-filter: blur(10px);
+      }
+
+      ::selection {
+        background: rgba(255, 255, 255, 0.8); /* 半透明白色背景 */
+        color: #000;
+      }
+
+      header {
+        background-color: rgba(255, 255, 255, 0.3); /* 半透明白色背景 */
+        backdrop-filter: blur(10px); /* 添加模糊效果 */
+        padding: 1.5rem;
+        height: 100px;
+        text-align: center;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.3); /* 半透明边框 */
+      }
+
+      header h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #000000;
+        margin-bottom: 0.5rem;
+      }
+
+      header p {
+        font-size: 1.25rem;
+        color: #aaa;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 3rem auto;
+        padding: 0 1.5rem;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 2rem;
+      }
+
+      .activity-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(226, 232, 240, 0.8);
+        border-radius: 20px;
+        overflow: hidden;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 4px 6px rgba(148, 163, 184, 0.05);
+      }
+
+      .activity-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 20px 30px rgba(148, 163, 184, 0.1);
+      }
+
+      .activity-card img {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+      }
+
+      .activity-card .content {
+        padding: 1.5rem;
+      }
+
+      .activity-card .content h3 {
+        margin: 0 0 1rem 0;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #000000;
+      }
+
+      .activity-card .content p {
+        margin: 0 0 1.5rem 0;
+        color: #000000;
+        font-size: 1rem;
+      }
+
+      .activity-card .content a {
+        display: block;
+        text-align: center;
+        padding: 0.75rem 1rem;
+        background-color: #000000;
+        color: #ffffff;
+        font-weight: bold;
+        border-radius: 10px;
+        text-decoration: none;
+        transition: background-color 0.2s ease;
+      }
+
+      .activity-card .content a:hover {
+        background-color: #000000;
+      }
+
+      .navigation {
+        display: flex;
+        justify-content: space-between; /* 左右两端对齐 */
+        align-items: center; /* 垂直居中 */
+        padding: 1.5rem;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      .navigation .logo {
+        display: flex;
+        align-items: center; /* 确保图片和文字垂直居中 */
+        gap: 0.5rem; /* 图片和文字之间的间距 */
+        /* 给 logo 添加边框 */
+        padding: 0.5rem 1rem; /* 调整边框内间距 */
+        border-radius: 8px; /* 圆角边框 */
+        font-family: "Poppins", sans-serif;
+      }
+
+      .navigation .logo img {
+        max-height: 30px; /* 限制 logo 图片高度 */
+        width: auto; /* 保持宽高比 */
+        display: block; /* 移除多余空白 */
+      }
+
+      .navigation .logo span {
+        font-size: 1.2rem; /* 调整文字大小 */
+        font-weight: bold; /* 加粗文字 */
+        color: #333; /* 文字颜色 */
+      }
+
+      .navigation .menu {
+        list-style-type: none; /* 去除列表默认样式 */
+        display: flex;
+        gap: 2rem; /* 控制菜单项间距 */
+        margin: 0; /* 去除默认外边距 */
+        padding: 0; /* 去除默认内边距 */
+      }
+
+      .navigation .menu li a {
+        text-decoration: none; /* 去除下划线 */
+        color: #000000; /* 菜单文字颜色 */
+        font-weight: 600; /* 加粗菜单文字 */
+        transition: color 0.2s ease; /* 添加颜色过渡效果 */
+      }
+
+      .navigation .menu li a:hover {
+        color: #d6d6d6; /* 鼠标悬停时的高亮颜色 */
+      }
+
+      /* 修改地图容器样式 */
+      #map-container {
+        display: none;
+        height: 500px;
+        width: 100%;
+        margin: 2rem auto;
+        max-width: 1200px;
+        z-index: 1;
+      }
+
+      /* 添加显示地图时的样式 */
+      .show-map {
+        display: block !important;
+      }
+
+      /* 图片容器效果 */
+      .image-container {
+        position: relative;
+        aspect-ratio: 16/9;
+        overflow: hidden;
+      }
+
+      .image-container img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .activity-card:hover .image-container img {
+        transform: scale(1.08);
+      }
+
+      .image-overlay {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          to bottom,
+          transparent 0%,
+          rgba(0, 0, 0, 0.2) 100%
+        );
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+
+      .activity-card:hover .image-overlay {
+        opacity: 1;
+      }
+
+      /* 状态标签动画 */
+      .event-status {
+        background: linear-gradient(135deg, #e0f2fe, #bfdbfe);
+        animation: statusPulse 2s infinite ease-in-out;
+      }
+
+      @keyframes statusPulse {
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.03);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+
+      /* 按钮动画效果 */
+      .btn {
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s ease;
+      }
+
+      .btn::after {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(
+          transparent,
+          rgba(255, 255, 255, 0.2),
+          transparent
+        );
+        transform: rotate(45deg);
+        transition: 0.5s;
+      }
+
+      .btn:hover::after {
+        left: 100%;
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, #0ea5e9, #0284c7);
+        border: none;
+        transform-origin: center;
+        transition: all 0.3s ease;
+      }
+
+      .btn-primary:hover {
+        transform: scale(1.02);
+        box-shadow: 0 4px 12px rgba(14, 165, 233, 0.2);
+      }
+
+      /* 图标动画 */
+      .meta-item i {
+        transition: transform 0.3s ease;
+      }
+
+      .meta-item:hover i {
+        transform: scale(1.2) rotate(5deg);
+      }
+
+      /* 内容区域渐变和阴影 */
+      .activity-info {
+        background: linear-gradient(
+          to bottom,
+          rgba(255, 255, 255, 0.95),
+          rgba(255, 255, 255, 0.98)
+        );
+        padding: 1.5rem;
+      }
+
+      /* 主办方信息hover效果 */
+      .event-host {
+        transition: transform 0.3s ease;
+        padding: 1rem;
+        border-radius: 12px;
+      }
+
+      .event-host:hover {
+        transform: translateX(4px);
+        background: rgba(241, 245, 249, 0.5);
+      }
+
+      /* 价格动画 */
+      .price-amount {
+        position: relative;
+        display: inline-block;
+        transition: transform 0.3s ease;
+      }
+
+      .price-amount:hover {
+        transform: scale(1.1);
+        color: #0284c7;
+      }
+
+      /* 标题悬停效果 */
+      .activity-title {
+        position: relative;
+        display: inline-block;
+      }
+
+      .activity-title::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        bottom: -2px;
+        width: 0;
+        height: 2px;
+        background: linear-gradient(90deg, #0ea5e9, #0284c7);
+        transition: width 0.3s ease;
+      }
+
+      .activity-title:hover::after {
+        width: 100%;
+      }
+
+      /* 日期和时间微动效 */
+      .event-meta .meta-item {
+        padding: 0.5rem;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+      }
+
+      .event-meta .meta-item:hover {
+        background: rgba(241, 245, 249, 0.8);
+        transform: translateY(-2px);
+      }
+
+      .info-box {
+        display: none; /* 删除不必要的框样式 */
+      }
+
+      /* 只保留图标和文字 */
+      .meta-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.75rem;
+        font-size: 1rem;
+        color: #333;
+      }
+
+      .meta-item i {
+        margin-right: 0.5rem;
+        color: #d4d4d4; /* 图标颜色 */
+      }
+
+      .meta-item span {
+        color: #333;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="navigation">
+        <div class="logo">
+          <img src="logo.png" alt="Timo Logo" />
+          <span>Timo</span>
+        </div>
+        <ul class="menu">
+          <li><a href="#">主页</a></li>
+          <li><a href="#">活动</a></li>
+          <li><a href="#" id="show-map">地图</a></li>
+          <li><a href="#">关于我们</a></li>
+          <li><a href="#">联系我们</a></li>
+        </ul>
+      </div>
+    </header>
+
+    <div class="container">
+      <div class="activity-card">
+        <img src="activity1.jpg" alt="活动图片" />
+        <div class="content">
+          <h3>夏日音乐节</h3>
+          <p>加入我们，一起享受充满活力的音乐和氛围。</p>
+
+          <div class="meta-item">
+            <i class="fas fa-clock"></i> <span>2025年7月15日 19:00</span>
+          </div>
+
+          <!-- 地点 -->
+          <div class="meta-item">
+            <i class="fas fa-map-marker-alt"></i> <span>上海市中心</span>
+          </div>
+
+          <a href="summer_festival.html">了解更多</a>
+        </div>
+      </div>
+
+      <div class="activity-card">
+        <img src="activity2.jpg" alt="活动图片" />
+        <div class="content">
+          <h3>社区健步行</h3>
+          <p>与邻居们一起在自然中放松身心，享受新鲜空气。</p>
+          <a href="community_walk.html">了解更多</a>
+        </div>
+      </div>
+
+      <div class="activity-card">
+        <img src="activity3.jpg" alt="活动图片" />
+        <div class="content">
+          <h3>创意工坊</h3>
+          <p>与艺术家们一起动手，体验创意制作的乐趣，释放你的创造力。</p>
+          <a href="creative_workshop.html">了解更多</a>
+        </div>
+      </div>
+
+      <div class="activity-card">
+        <img src="activity4.jpg" alt="活动图片" />
+        <div class="content">
+          <h3>美食体验日</h3>
+          <p>探索本地美食，品味来自世界各地的美味佳肴。</p>
+          <a href="food_experience.html">了解更多</a>
+        </div>
+      </div>
+
+      <div class="activity-card">
+        <img src="activity5.jpg" alt="活动图片" />
+        <div class="content">
+          <h3>瑜伽冥想日</h3>
+          <p>参加瑜伽和冥想课程，放松身心，找到内心的平静。</p>
+          <a href="yoga_meditation.html">了解更多</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- 添加地图容器 -->
+    <div id="map-container"></div>
+
+    <script>
+      let map;
+      const mapContainer = document.getElementById("map-container");
+      const showMapButton = document.getElementById("show-map");
+
+      function initMap() {
+        try {
+          if (!mapContainer) {
+            console.error("地图容器未找到");
+            return;
+          }
+
+          // 初始化地图，设置中心点（北京）和缩放级别
+          map = L.map("map-container").setView([39.9042, 116.4074], 12);
+
+          // 添加 OpenStreetMap 图层
+          L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            attribution:
+              '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+          }).addTo(map);
+
+          // 添加一个标记点
+          L.marker([39.9042, 116.4074])
+            .addTo(map)
+            .bindPopup("北京市中心")
+            .openPopup();
+        } catch (error) {
+          console.error("初始化地图时发生错误:", error);
+        }
+      }
+
+      showMapButton.addEventListener("click", function (e) {
+        e.preventDefault();
+        mapContainer.classList.toggle("show-map");
+        if (mapContainer.classList.contains("show-map")) {
+          if (!map) {
+            initMap();
+          } else {
+            // 当地图重新显示时，刷新地图大小
+            map.invalidateSize();
+          }
+        }
+      });
+    </script>
+  </body>
+</html>
